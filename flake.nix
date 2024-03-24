@@ -14,23 +14,21 @@
       pkgs = forAllSystems (system:
         import nixpkgs {
           inherit system;
-          overlays = [ self.overlays.${system}.default ];
+          overlays = [
+            (final: _: {
+              mctools = with final;
+                stdenv.mkDerivation rec {
+                  name = "mctools";
+
+                  src = ./.;
+
+                  nativeBuildInputs = [ web-ext ];
+                };
+            })
+          ];
         });
 
     in {
-      overlays = forAllSystems (_: {
-        default = (final: _: {
-          mctools = with final;
-            stdenv.mkDerivation rec {
-              name = "mctools";
-
-              src = ./.;
-
-              nativeBuildInputs = [ web-ext ];
-            };
-        });
-      });
-
       devShells = forAllSystems (system: {
         precommit = pkgs.${system}.mkShell {
           inherit (self.checks.${system}.pre-commit-check) shellHook;
